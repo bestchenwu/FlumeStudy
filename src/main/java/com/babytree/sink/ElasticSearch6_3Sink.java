@@ -1,6 +1,7 @@
 package com.babytree.sink;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
@@ -90,9 +91,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         } catch (Throwable e) {
             transaction.rollback();
             status = Status.BACKOFF;
-            if (e instanceof Error) {
-                throw e;
-            }
+            ExceptionUtils.printRootCauseStackTrace(e);
         } finally {
             if (transaction != null) {
                 transaction.close();
