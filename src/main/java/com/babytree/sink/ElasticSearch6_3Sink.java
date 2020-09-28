@@ -30,11 +30,11 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     private String hostNames;
     private String indexName;
     private String clusterName;
-    private String idField ;
+    private String idField;
     private int batchSize = 100;
     static TransportClient transportClient;
     private int retry_times;
-    private Gson gson ;
+    private Gson gson;
 
     @Override
     public synchronized void start() {
@@ -43,11 +43,11 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
             transportClient = new PreBuiltTransportClient(settings);
             String[] splitArray = hostNames.split(",");
             TransportAddress[] addresses = new TransportAddress[splitArray.length];
-            for(int i = 0;i<splitArray.length;i++){
+            for (int i = 0; i < splitArray.length; i++) {
                 String[] split = splitArray[i].split(":");
-                addresses[i] = new TransportAddress(InetAddress.getByName(split[0]),Integer.parseInt(split[1]));
+                addresses[i] = new TransportAddress(InetAddress.getByName(split[0]), Integer.parseInt(split[1]));
             }
-            for(TransportAddress address : addresses){
+            for (TransportAddress address : addresses) {
                 transportClient.addTransportAddress(address);
             }
         } catch (UnknownHostException e) {
@@ -64,54 +64,54 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
 
     @Override
     public Status process() throws EventDeliveryException {
-        Status status =  Status.READY;
+        Status status = Status.READY;
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
         transaction.begin();
-        try{
-            List<Map<String,Object>> datas = new ArrayList<>();
-            for(int i = 0;i<batchSize;i++){
+        while (true) {
+            try {
+                List<Map<String, Object>> dataList = new ArrayList<>();
                 Event event = channel.take();
-                if(event==null){
+                if (event == null) {
                     System.err.println("event is null");
                     status = Status.BACKOFF;
                     break;
                 }
                 byte[] body = event.getBody();
-                if(body == null ){
-                    System.err.println("body is null,event="+event);
+                if (body == null) {
+                    System.err.println("body is null,event=" + event);
                     status = Status.BACKOFF;
                     break;
                 }
-                Map<String,Object> map = gson.fromJson(String.valueOf(body),Map.class);
-                map.put("cmd","add");
-                map.put("id",map.get(idField));
-                datas.add(map);
-            }
-            if(datas.size()>0){
-                System.out.println("get event:"+datas);
-                boolean result = bulk(indexName,datas);
-                System.out.println("result="+result);
-            }
-            transaction.commit();
-        }catch(Throwable e){
-            transaction.rollback();
-            status = Status.BACKOFF;
-            if(e instanceof Error){
-                throw e;
-            }
-        }finally {
-            if(transaction!=null){
-                transaction.close();
+                Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
+                map.put("cmd", "add");
+                map.put("id", map.get(idField));
+                dataList.add(map);
+                if (dataList.size() > 0) {
+                    System.out.println("get event:" + dataList);
+                    boolean result = bulk(indexName, dataList);
+                    System.out.println("result=" + result);
+                }
+                transaction.commit();
+            } catch (Throwable e) {
+                transaction.rollback();
+                status = Status.BACKOFF;
+                if (e instanceof Error) {
+                    throw e;
+                }
+            } finally {
+                if (transaction != null) {
+                    transaction.close();
+                }
             }
         }
         return status;
     }
 
-    private boolean bulk(String indexName, List<Map<String,Object>> datas){
+    private boolean bulk(String indexName, List<Map<String, Object>> datas) {
         BulkRequestBuilder bulkRequestBuilder = transportClient.prepareBulk();
 
-        for(Map<String,Object> map : datas){
+        for (Map<String, Object> map : datas) {
             UpdateRequest updateRequest = new UpdateRequest().index(indexName)
                     .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
             bulkRequestBuilder.add(updateRequest);
@@ -126,7 +126,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         indexName = context.getString(INDEX_NAME);
         clusterName = context.getString(CLUSTER_NAME);
         batchSize = Optional.of(context.getInteger("batchSize")).orElse(2);
-        retry_times  = Optional.of(context.getInteger("retry_times")).orElse(3);
+        retry_times = Optional.of(context.getInteger("retry_times")).orElse(3);
         //主键id字段
         idField = context.getString("elasticSearchIds");
     }
