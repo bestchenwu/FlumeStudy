@@ -79,7 +79,10 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 System.out.println("event is not null:"+event);
                 byte[] body = event.getBody();
                 List<Map<String, Object>> dataList = new ArrayList<>();
-                Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
+                //Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
+                Map<String,Object> map = new HashMap<>();
+                map.put("mac","test");
+                map.put("recent_3_query","test31,test22");
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
                 dataList.add(map);
