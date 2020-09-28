@@ -68,9 +68,10 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         Status status = Status.READY;
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
-        transaction.begin();
-        Event event =  channel.take();;
+        Event event =  null;
         try {
+            transaction.begin();
+            event = channel.take();
             if (event == null) {
                 System.err.println("body is null,event=" + event);
                 status = Status.BACKOFF;
