@@ -54,6 +54,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
             throw new RuntimeException(e);
         }
         gson = new Gson();
+        super.start();
     }
 
     @Override
@@ -71,8 +72,14 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
             List<Map<String,Object>> datas = new ArrayList<>();
             for(int i = 0;i<batchSize;i++){
                 Event event = channel.take();
+                if(event==null){
+                    System.err.println("event is null");
+                    status = Status.BACKOFF;
+                    break;
+                }
                 byte[] body = event.getBody();
                 if(body == null ){
+                    System.err.println("body is null,event="+event);
                     status = Status.BACKOFF;
                     break;
                 }
