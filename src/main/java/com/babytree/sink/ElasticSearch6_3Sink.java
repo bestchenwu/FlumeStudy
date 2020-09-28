@@ -75,6 +75,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 System.err.println("body is null,event=" + event);
                 status = Status.BACKOFF;
             }else{
+                System.out.println("event is not null:"+event);
                 byte[] body = event.getBody();
                 List<Map<String, Object>> dataList = new ArrayList<>();
                 Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
