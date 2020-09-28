@@ -6,6 +6,7 @@ import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.sink.elasticsearch.client.ElasticSearchClient;
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -72,6 +73,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     @Override
     public Status process() throws EventDeliveryException {
         Status status = Status.READY;
+
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
         Event event =  null;
@@ -83,12 +85,14 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 status = Status.BACKOFF;
             }else{
                 System.out.println("event is not null:"+event);
-                byte[] body = event.getBody();
+                //byte[] body = event.getBody();
+                String body = new String(event.getBody());
+                String[] splitArray = body.split(",");
                 List<Map<String, Object>> dataList = new ArrayList<>();
                 //Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
                 Map<String,Object> map = new HashMap<>();
-                map.put("mac","test");
-                map.put("recent_3_query","test31,test22");
+                map.put("mac",splitArray[0]);
+                map.put("recent_3_query",splitArray[1]);
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
                 dataList.add(map);
@@ -118,7 +122,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                     .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
             request.add(updateRequest);
         }
-        BulkResponse bulkResponse = restHighLevelClient.bulk(request,null);
+        BulkResponse bulkResponse = restHighLevelClient.bulk(request,new Header[0]);
         return bulkResponse.hasFailures();
     }
 
@@ -127,8 +131,8 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         hostNames = context.getString(HOSTNAMES);
         indexName = context.getString(INDEX_NAME);
         clusterName = context.getString(CLUSTER_NAME);
-        batchSize = Optional.of(context.getInteger("batchSize")).orElse(2);
-        retry_times = Optional.of(context.getInteger("retry_times")).orElse(3);
+        batchSize = Optional.ofNullable(context.getInteger("batchSize")).orElse(2);
+        retry_times = Optional.ofNullable(context.getInteger("retry_times")).orElse(3);
         //主键id字段
         idField = context.getString("elasticSearchIds");
     }
