@@ -82,7 +82,9 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 datas.add(map);
             }
             if(datas.size()>0){
-                bulk(indexName,datas);
+                System.out.println("get event:"+datas);
+                boolean result = bulk(indexName,datas);
+                System.out.println("result="+result);
             }
             transaction.commit();
         }catch(Throwable e){
@@ -116,7 +118,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         hostNames = context.getString(HOSTNAMES);
         indexName = context.getString(INDEX_NAME);
         clusterName = context.getString(CLUSTER_NAME);
-        batchSize = Optional.of(context.getInteger("batchSize")).orElse(100);
+        batchSize = Optional.of(context.getInteger("batchSize")).orElse(2);
         retry_times  = Optional.of(context.getInteger("retry_times")).orElse(3);
         //主键id字段
         idField = context.getString("elasticSearchIds");
