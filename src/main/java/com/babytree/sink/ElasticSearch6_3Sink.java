@@ -68,21 +68,22 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
         transaction.begin();
-        while (true) {
-            try {
+        Event event;
+        while(true){
+            event = channel.take();
+            if (event == null) {
+                System.err.println("event is null");
+                status = Status.BACKOFF;
+                break;
+            }
+        }
+        try {
+            byte[] body = event.getBody();
+            if (body == null) {
+                System.err.println("body is null,event=" + event);
+                status = Status.BACKOFF;
+            }else{
                 List<Map<String, Object>> dataList = new ArrayList<>();
-                Event event = channel.take();
-                if (event == null) {
-                    System.err.println("event is null");
-                    status = Status.BACKOFF;
-                    break;
-                }
-                byte[] body = event.getBody();
-                if (body == null) {
-                    System.err.println("body is null,event=" + event);
-                    status = Status.BACKOFF;
-                    break;
-                }
                 Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
@@ -92,17 +93,17 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                     boolean result = bulk(indexName, dataList);
                     System.out.println("result=" + result);
                 }
-                transaction.commit();
-            } catch (Throwable e) {
-                transaction.rollback();
-                status = Status.BACKOFF;
-                if (e instanceof Error) {
-                    throw e;
-                }
-            } finally {
-                if (transaction != null) {
-                    transaction.close();
-                }
+            }
+            transaction.commit();
+        } catch (Throwable e) {
+            transaction.rollback();
+            status = Status.BACKOFF;
+            if (e instanceof Error) {
+                throw e;
+            }
+        } finally {
+            if (transaction != null) {
+                transaction.close();
             }
         }
         return status;
