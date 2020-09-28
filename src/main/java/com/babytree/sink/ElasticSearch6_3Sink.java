@@ -40,8 +40,16 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     public synchronized void start() {
         Settings settings = Settings.builder().put("cluster.name", clusterName).build();
         try {
-            transportClient = new PreBuiltTransportClient(settings).addTransportAddress(new TransportAddress(
-                    InetAddress.getByName(hostNames.split(":")[0]), Integer.parseInt(hostNames.split(":")[1])));
+            transportClient = new PreBuiltTransportClient(settings);
+            String[] splitArray = hostNames.split(",");
+            TransportAddress[] addresses = new TransportAddress[splitArray.length];
+            for(int i = 0;i<splitArray.length;i++){
+                String[] split = splitArray[i].split(":");
+                addresses[i] = new TransportAddress(InetAddress.getByName(split[0]),Integer.parseInt(split[1]));
+            }
+            for(TransportAddress address : addresses){
+                transportClient.addTransportAddress(address);
+            }
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
