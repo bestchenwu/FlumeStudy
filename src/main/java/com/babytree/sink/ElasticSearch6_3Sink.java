@@ -5,14 +5,19 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
+import org.apache.flume.sink.elasticsearch.client.ElasticSearchClient;
+import org.apache.http.HttpHost;
+import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -33,7 +38,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     private String clusterName;
     private String idField;
     private int batchSize = 100;
-    static TransportClient transportClient;
+    private RestHighLevelClient restHighLevelClient;
     private int retry_times;
     private Gson gson;
 
@@ -41,17 +46,18 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     public synchronized void start() {
         Settings settings = Settings.builder().put("cluster.name", clusterName).build();
         try {
-            transportClient = new PreBuiltTransportClient(settings);
+            //transportClient = new PreBuiltTransportClient(settings);
+
             String[] splitArray = hostNames.split(",");
-            TransportAddress[] addresses = new TransportAddress[splitArray.length];
+            List<HttpHost> hostsAndPorts = new ArrayList<>();
             for (int i = 0; i < splitArray.length; i++) {
-                String[] split = splitArray[i].split(":");
-                addresses[i] = new TransportAddress(InetAddress.getByName(split[0]), Integer.parseInt(split[1]));
+                String[] ipPortArray = splitArray[i].split(":");
+                //addresses[i] = new TransportAddress(InetAddress.getByName(split[0]), Integer.parseInt(split[1]));
+                HttpHost httpHost = new HttpHost(ipPortArray[0], Integer.parseInt(ipPortArray[1]));
+                hostsAndPorts.add(httpHost);
             }
-            for (TransportAddress address : addresses) {
-                transportClient.addTransportAddress(address);
-            }
-        } catch (UnknownHostException e) {
+            restHighLevelClient = new RestHighLevelClient(RestClient.builder(hostsAndPorts.toArray(new HttpHost[0])));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         gson = new Gson();
@@ -105,15 +111,14 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
         return status;
     }
 
-    private boolean bulk(String indexName, List<Map<String, Object>> datas) {
-        BulkRequestBuilder bulkRequestBuilder = transportClient.prepareBulk();
-
+    private boolean bulk(String indexName, List<Map<String, Object>> datas) throws IOException {
+        BulkRequest request = new BulkRequest();
         for (Map<String, Object> map : datas) {
             UpdateRequest updateRequest = new UpdateRequest().index(indexName)
                     .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
-            bulkRequestBuilder.add(updateRequest);
+            request.add(updateRequest);
         }
-        BulkResponse bulkResponse = bulkRequestBuilder.execute().actionGet();
+        BulkResponse bulkResponse = restHighLevelClient.bulk(request,null);
         return bulkResponse.hasFailures();
     }
 
