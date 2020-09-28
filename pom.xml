@@ -53,11 +53,11 @@
 				<version>6.3.0</version>
 			</dependency>
 			<!-- https://mvnrepository.com/artifact/org.elasticsearch.client/transport -->
-			<dependency>
-				<groupId>org.elasticsearch.client</groupId>
-				<artifactId>transport</artifactId>
-				<version>6.3.0</version>
-			</dependency>
+			<!--<dependency>-->
+				<!--<groupId>org.elasticsearch.client</groupId>-->
+				<!--<artifactId>transport</artifactId>-->
+				<!--<version>6.3.0</version>-->
+			<!--</dependency>-->
 			<dependency>
 				<groupId>org.elasticsearch.client</groupId>
 				<artifactId>elasticsearch-rest-high-level-client</artifactId>
@@ -67,6 +67,12 @@
 				<groupId>org.apache.flume.flume-ng-sinks</groupId>
 				<artifactId>flume-ng-elasticsearch-sink</artifactId>
 				<version>1.6.0</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.apache.httpcomponents</groupId>
+						<artifactId>httpclient</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.gson</groupId>
@@ -121,6 +127,12 @@
 				<artifactId>maven-shade-plugin</artifactId>
 				<!--<version>3.1.1</version>-->
 				<configuration>
+					<relocations>
+						<relocation>
+							<pattern>org.apache.httpcomponents</pattern>
+							<shadedPattern>org.apache.httpcomponentsnew</shadedPattern>
+						</relocation>
+					</relocations>
 					<filters>
 						<filter>
 							<artifact>*:*</artifact>
