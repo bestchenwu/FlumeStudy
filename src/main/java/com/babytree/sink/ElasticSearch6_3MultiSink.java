@@ -76,7 +76,12 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                 }
                 String body = new String(event.getBody());
                 try{
-                    Map<String, Object> map = gson.fromJson(body, Map.class);
+                    Map<String, Object> map = null;
+                    try{
+                        map = gson.fromJson(body, Map.class);
+                    }catch(Exception e){
+                        throw new IllegalArgumentException("body is not a valid Json string,body="+body);
+                    }
                     if(map == null){
                         break;
                     }
