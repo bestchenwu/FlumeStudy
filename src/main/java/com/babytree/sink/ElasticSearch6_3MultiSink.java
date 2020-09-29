@@ -14,6 +14,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
     private RestHighLevelClient restHighLevelClient2;
     private int retry_times;
     private Gson gson;
+    private long esWriteTimeout = 30l;
 
     @Override
     public synchronized void start() {
@@ -138,6 +140,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                     .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
             request.add(updateRequest);
         }
+        request.timeout(TimeValue.timeValueSeconds(esWriteTimeout));
         BulkResponse bulkResponse = restHighLevelClient.bulk(request, new Header[0]);
         return bulkResponse.hasFailures();
     }
@@ -151,5 +154,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         retry_times = Optional.ofNullable(context.getInteger("retry_times")).orElse(3);
         //主键id字段
         idField = context.getString("elasticSearchIds");
+        //写超时时间
+        esWriteTimeout = Optional.ofNullable(context.getLong("write_time_out")).orElse(30l);
     }
 }
