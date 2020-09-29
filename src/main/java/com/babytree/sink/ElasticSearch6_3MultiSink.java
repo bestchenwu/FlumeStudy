@@ -89,7 +89,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                     map.put("id", id);
                     dataList.add(map);
                 }catch(Exception e){
-                    ExceptionUtils.getFullStackTrace(e);
+                    ExceptionUtils.printRootCauseStackTrace(e);
                 }
             }
             if (dataList.size() > 0) {
