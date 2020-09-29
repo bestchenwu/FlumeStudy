@@ -72,6 +72,20 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
 
     @Override
     public synchronized void stop() {
+        if(restHighLevelClient1!=null){
+            try{
+                restHighLevelClient1.close();
+            }catch(IOException e){
+                ExceptionUtils.printRootCauseStackTrace(e);
+            }
+        }
+        if(restHighLevelClient2!=null){
+            try{
+                restHighLevelClient2.close();
+            }catch(IOException e){
+                ExceptionUtils.printRootCauseStackTrace(e);
+            }
+        }
         super.stop();
     }
 
@@ -106,7 +120,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                        continue;
                     }
                     map.put("cmd", "add");
-                    map.put("id", id);
+                    map.put("id", String.valueOf(id));
                     dataList.add(map);
                 }catch(Exception e){
                     ExceptionUtils.printRootCauseStackTrace(e);
@@ -137,7 +151,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         BulkRequest request = new BulkRequest();
         for (Map<String, Object> map : datas) {
             UpdateRequest updateRequest = new UpdateRequest().index(indexName)
-                    .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
+                    .type("_doc").id((String)map.get("id")).doc(map).retryOnConflict(retry_times).upsert(map);
             request.add(updateRequest);
         }
         request.timeout(TimeValue.timeValueSeconds(esWriteTimeout));
