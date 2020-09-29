@@ -120,11 +120,9 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                         System.err.println("id is missing:"+map);
                        continue;
                     }else{
-                        System.out.println("id="+id);
-                        String s_id = String.valueOf(id);
-                        System.out.println("s_id="+s_id);
+                        String es_id = String.valueOf(id);
                         map.put("cmd", "add");
-                        map.put("id", s_id);
+                        map.put("id", es_id);
                         dataList.add(map);
                     }
                 }catch(Exception e){

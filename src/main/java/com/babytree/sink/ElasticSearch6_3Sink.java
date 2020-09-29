@@ -81,11 +81,16 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 String body = new String(event.getBody());
                 System.out.println("recieve body:" + body);
                 List<Map<String, Object>> dataList = new ArrayList<>();
-                Map<String, Object> map = (Map<String, Object>) JSON.parseObject(body, Map.class);
-                map.put("cmd", "add");
-                map.put("id", map.get(idField));
-                dataList.add(map);
-                if (dataList.size() > 0) {
+                Map<String, Object> map = null;
+                try {
+                    map = (Map<String, Object>) JSON.parseObject(body, Map.class);
+                } catch (Exception e) {
+                    System.err.println("body is not a valid Json string,body=" + body);
+                }
+                if (map != null) {
+                    map.put("cmd", "add");
+                    map.put("id", map.get(idField));
+                    dataList.add(map);
                     System.out.println("get event:" + dataList);
                     boolean result = bulk(indexName, dataList);
                     System.out.println("result=" + result);
