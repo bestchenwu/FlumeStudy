@@ -39,6 +39,9 @@ public class KafkaProducerTest {
                     break;
                 }
             }
+            //发送一条id为空的数据
+            queryModel.setMac(null);
+            producer.send(new ProducerRecord(topicName,gson.toJson(queryModel)));
         }
     }
 }

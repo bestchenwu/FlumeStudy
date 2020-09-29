@@ -65,25 +65,35 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         Status status = Status.READY;
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
+        List<Map<String, Object>> dataList = new ArrayList<>();
         try {
             transaction.begin();
-            List<Map<String, Object>> dataList = new ArrayList<>();
+
             for(int i = 0;i<batchSize;i++){
                 Event event = channel.take();
                 if(event==null){
                     break;
                 }
                 String body = new String(event.getBody());
-                System.out.println("recieve body:" + body);
-                Map<String, Object> map = gson.fromJson(body, Map.class);
-                map.put("cmd", "add");
-                map.put("id", map.get(idField));
-                dataList.add(map);
+                try{
+                    Map<String, Object> map = gson.fromJson(body, Map.class);
+                    if(map == null){
+                        break;
+                    }
+                    Object id = map.get(idField);
+                    if(id==null){
+                        System.err.println("id is missing:"+map);
+                       continue;
+                    }
+                    map.put("cmd", "add");
+                    map.put("id", id);
+                    dataList.add(map);
+                }catch(Exception e){
+                    ExceptionUtils.getFullStackTrace(e);
+                }
             }
             if (dataList.size() > 0) {
-                System.out.println("get event:" + dataList);
-                boolean result = bulk(indexName, dataList);
-                System.out.println("result=" + result);
+                bulk(indexName, dataList);
                 dataList.clear();
             }
             transaction.commit();
