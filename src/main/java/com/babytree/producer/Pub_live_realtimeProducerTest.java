@@ -1,5 +1,6 @@
 package com.babytree.producer;
 
+import com.alibaba.fastjson.JSON;
 import com.google.gson.Gson;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -36,7 +37,7 @@ public class Pub_live_realtimeProducerTest {
             liveModel.setAppointment_start_ts("2020-09-29 15:47:32");
             liveModel.setPv_total(i+100);
             liveModel.setVideo_type(i+2);
-            producer.send(new ProducerRecord(topicName,gson.toJson(liveModel)));
+            producer.send(new ProducerRecord(topicName, JSON.toJSONString(liveModel)));
             i+=1;
             if(i%10==0){
                 try{

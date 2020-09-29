@@ -1,5 +1,6 @@
 package com.babytree.sink;
 
+import com.alibaba.fastjson.JSON;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -107,7 +108,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                 try{
                     Map<String, Object> map = null;
                     try{
-                        map = gson.fromJson(body, Map.class);
+                        map = (Map<String, Object>)JSON.parseObject(body, Map.class);
                     }catch(Exception e){
                         throw new IllegalArgumentException("body is not a valid Json string,body="+body);
                     }

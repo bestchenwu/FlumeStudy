@@ -1,5 +1,6 @@
 package com.babytree.sink;
 
+import com.alibaba.fastjson.JSON;
 import com.google.gson.Gson;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
@@ -80,7 +81,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 String body = new String(event.getBody());
                 System.out.println("recieve body:" + body);
                 List<Map<String, Object>> dataList = new ArrayList<>();
-                Map<String, Object> map = gson.fromJson(body, Map.class);
+                Map<String, Object> map = (Map<String, Object>) JSON.parseObject(body, Map.class);
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
                 dataList.add(map);

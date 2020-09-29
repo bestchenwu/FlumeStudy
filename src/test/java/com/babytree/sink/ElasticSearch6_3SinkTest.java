@@ -1,5 +1,7 @@
 package com.babytree.sink;
 
+import com.alibaba.fastjson.JSON;
+import com.babytree.producer.PubLiveModel;
 import com.google.gson.Gson;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
@@ -16,6 +18,22 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOS
 public class ElasticSearch6_3SinkTest {
 
     @Test
+    public void testGson(){
+        Gson gson = new Gson();
+        int i = 100;
+        PubLiveModel liveModel = new PubLiveModel();
+        liveModel.setDiscussion_id((long)i);
+        liveModel.setAppointment_start_ts("2020-09-29 15:47:32");
+        liveModel.setPv_total(i+100);
+        liveModel.setVideo_type(i+2);
+        String str = JSON.toJSONString(liveModel);
+        System.out.println("str="+str);
+        Map<String,Object> map = (Map<String, Object>)JSON.parseObject(str, Map.class);
+        System.out.println("map="+map);
+        System.out.println("discuss_id="+map.get("discussion_id"));
+    }
+
+    //@Test
     public void testParse(){
 //        String str = "{\"mac\":\"test2\",\"recent_elasticSearchIds3_query\":\"test21,test22\"}";
 //        Gson gson = new Gson();
