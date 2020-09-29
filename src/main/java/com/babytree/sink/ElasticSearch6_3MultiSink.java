@@ -1,6 +1,7 @@
 package com.babytree.sink;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
@@ -29,18 +30,31 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.*;
  */
 public class ElasticSearch6_3MultiSink extends AbstractSink implements Configurable {
 
-    private String hostNames;
+    private String hostNames1;
+    private String hostNames2;
     private String indexName;
     private String idField;
     private int batchSize = 100;
-    private RestHighLevelClient restHighLevelClient;
+    private RestHighLevelClient restHighLevelClient1;
+    private RestHighLevelClient restHighLevelClient2;
     private int retry_times;
     private Gson gson;
 
     @Override
     public synchronized void start() {
+        restHighLevelClient1 = buildHighLevelClient(hostNames1);
+        restHighLevelClient2 =  buildHighLevelClient(hostNames2);
+        gson = new Gson();
+        super.start();
+    }
+
+    private RestHighLevelClient buildHighLevelClient(String hostName){
+        if(StringUtils.isBlank(hostName)){
+            return null;
+        }
+        RestHighLevelClient restHighLevelClient = null;
         try {
-            String[] splitArray = hostNames.split(",");
+            String[] splitArray = hostName.split(",");
             List<HttpHost> hostsAndPorts = new ArrayList<>();
             for (int i = 0; i < splitArray.length; i++) {
                 String[] ipPortArray = splitArray[i].split(":");
@@ -51,8 +65,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        gson = new Gson();
-        super.start();
+        return restHighLevelClient;
     }
 
     @Override
@@ -98,7 +111,8 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                 }
             }
             if (dataList.size() > 0) {
-                bulk(indexName, dataList);
+                bulk(restHighLevelClient1, dataList);
+                bulk(restHighLevelClient2, dataList);
                 dataList.clear();
             }
             transaction.commit();
@@ -114,7 +128,10 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         return status;
     }
 
-    private boolean bulk(String indexName, List<Map<String, Object>> datas) throws IOException {
+    private boolean bulk(RestHighLevelClient restHighLevelClient, List<Map<String, Object>> datas) throws IOException {
+        if(restHighLevelClient==null){
+            return false;
+        }
         BulkRequest request = new BulkRequest();
         for (Map<String, Object> map : datas) {
             UpdateRequest updateRequest = new UpdateRequest().index(indexName)
@@ -127,7 +144,8 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
 
     @Override
     public void configure(Context context) {
-        hostNames = context.getString(HOSTNAMES);
+        hostNames1 = Optional.ofNullable(context.getString(HOSTNAMES+"1")).orElse("");
+        hostNames2 = Optional.ofNullable(context.getString(HOSTNAMES+"2")).orElse("");
         indexName = context.getString(INDEX_NAME);
         batchSize = Optional.ofNullable(context.getInteger("batchSize")).orElse(2);
         retry_times = Optional.ofNullable(context.getInteger("retry_times")).orElse(3);
