@@ -70,20 +70,21 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
 
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
-        Event event =  null;
+        Event event = null;
         try {
             transaction.begin();
             event = channel.take();
             if (event == null) {
                 status = Status.BACKOFF;
-            }else{
+            } else {
                 String body = new String(event.getBody());
-                String[] splitArray = body.split(",");
+                System.out.println("recieve body:" + body);
+                //String[] splitArray = body.split(",");
                 List<Map<String, Object>> dataList = new ArrayList<>();
-                //Map<String, Object> map = gson.fromJson(String.valueOf(body), Map.class);
-                Map<String,Object> map = new HashMap<>();
-                map.put("mac",splitArray[0]);
-                map.put("recent_3_query",splitArray[1]);
+                Map<String, Object> map = gson.fromJson(body, Map.class);
+//                Map<String,Object> map = new HashMap<>();
+//                map.put("mac",splitArray[0]);
+//                map.put("recent_3_query",splitArray[1]);
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
                 dataList.add(map);
@@ -113,7 +114,7 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                     .type("_doc").id(map.get("id").toString()).doc(map).retryOnConflict(retry_times).upsert(map);
             request.add(updateRequest);
         }
-        BulkResponse bulkResponse = restHighLevelClient.bulk(request,new Header[0]);
+        BulkResponse bulkResponse = restHighLevelClient.bulk(request, new Header[0]);
         return bulkResponse.hasFailures();
     }
 
