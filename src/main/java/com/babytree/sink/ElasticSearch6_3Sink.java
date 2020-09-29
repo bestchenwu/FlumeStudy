@@ -5,22 +5,16 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.flume.sink.elasticsearch.client.ElasticSearchClient;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
@@ -81,11 +75,8 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
             transaction.begin();
             event = channel.take();
             if (event == null) {
-                System.err.println("body is null,event=" + event);
                 status = Status.BACKOFF;
             }else{
-                System.out.println("event is not null:"+event);
-                //byte[] body = event.getBody();
                 String body = new String(event.getBody());
                 String[] splitArray = body.split(",");
                 List<Map<String, Object>> dataList = new ArrayList<>();
