@@ -15,22 +15,22 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.*;
 
 /**
- * 自定义输出到es6.3的sink
+ * 自定义输出到es6.3的sink(批量导入)
  *
  * @author chenwu on 2020.9.28
  */
-public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
+public class ElasticSearch6_3MultiSink extends AbstractSink implements Configurable {
 
     private String hostNames;
     private String indexName;
-    private String clusterName;
     private String idField;
     private int batchSize = 100;
     private RestHighLevelClient restHighLevelClient;
@@ -39,15 +39,11 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
 
     @Override
     public synchronized void start() {
-        Settings settings = Settings.builder().put("cluster.name", clusterName).build();
         try {
-            //transportClient = new PreBuiltTransportClient(settings);
-
             String[] splitArray = hostNames.split(",");
             List<HttpHost> hostsAndPorts = new ArrayList<>();
             for (int i = 0; i < splitArray.length; i++) {
                 String[] ipPortArray = splitArray[i].split(":");
-                //addresses[i] = new TransportAddress(InetAddress.getByName(split[0]), Integer.parseInt(split[1]));
                 HttpHost httpHost = new HttpHost(ipPortArray[0], Integer.parseInt(ipPortArray[1]));
                 hostsAndPorts.add(httpHost);
             }
@@ -67,28 +63,28 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     @Override
     public Status process() throws EventDeliveryException {
         Status status = Status.READY;
-
         Channel channel = getChannel();
         Transaction transaction = channel.getTransaction();
-        Event event = null;
         try {
             transaction.begin();
-            event = channel.take();
-            if (event == null) {
-                status = Status.BACKOFF;
-            } else {
+            List<Map<String, Object>> dataList = new ArrayList<>();
+            for(int i = 0;i<batchSize;i++){
+                Event event = channel.take();
+                if(event==null){
+                    break;
+                }
                 String body = new String(event.getBody());
                 System.out.println("recieve body:" + body);
-                List<Map<String, Object>> dataList = new ArrayList<>();
                 Map<String, Object> map = gson.fromJson(body, Map.class);
                 map.put("cmd", "add");
                 map.put("id", map.get(idField));
                 dataList.add(map);
-                if (dataList.size() > 0) {
-                    System.out.println("get event:" + dataList);
-                    boolean result = bulk(indexName, dataList);
-                    System.out.println("result=" + result);
-                }
+            }
+            if (dataList.size() > 0) {
+                System.out.println("get event:" + dataList);
+                boolean result = bulk(indexName, dataList);
+                System.out.println("result=" + result);
+                dataList.clear();
             }
             transaction.commit();
         } catch (Throwable e) {
@@ -118,7 +114,6 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
     public void configure(Context context) {
         hostNames = context.getString(HOSTNAMES);
         indexName = context.getString(INDEX_NAME);
-        clusterName = context.getString(CLUSTER_NAME);
         batchSize = Optional.ofNullable(context.getInteger("batchSize")).orElse(2);
         retry_times = Optional.ofNullable(context.getInteger("retry_times")).orElse(3);
         //主键id字段
