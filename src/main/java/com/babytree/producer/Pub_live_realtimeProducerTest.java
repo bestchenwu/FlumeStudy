@@ -5,6 +5,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -15,6 +16,10 @@ import java.util.Properties;
 public class Pub_live_realtimeProducerTest {
 
     public static void main(String[] args) {
+        int i = 0;
+        if(args.length>=1){
+            i = Integer.parseInt(Optional.of(args[0]).orElse("0"));
+        }
         String topicName = "pub_live_distribute";
         String bootStrapServerConfig = "172.26.6.87:9095,172.26.6.88:9095,172.26.6.89:9095";
         Gson gson = new Gson();
@@ -24,7 +29,7 @@ public class Pub_live_realtimeProducerTest {
         //properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"172.26.34.117:9095,172.26.34.118:9095,172.26.34.119:9095");
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootStrapServerConfig);
         KafkaProducer producer = new KafkaProducer(properties);
-        int i = 0;
+
         while(true){
             PubLiveModel liveModel = new PubLiveModel();
             liveModel.setDiscussion_id((long)i);
