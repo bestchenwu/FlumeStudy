@@ -86,6 +86,7 @@ public class ElasticSearchDeleteMethodTest {
                 elasticSearchDeleteMethodTest.deleteIds.add(String.valueOf(i)+".0");
             }
         }
+        System.out.println(elasticSearchDeleteMethodTest.deleteIds);
         elasticSearchDeleteMethodTest.deleteById();
         elasticSearchDeleteMethodTest.close();
     }
