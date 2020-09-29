@@ -66,12 +66,12 @@ public class ElasticSearchDeleteMethodTest {
         ElasticSearchDeleteMethodTest elasticSearchDeleteMethodTest = new ElasticSearchDeleteMethodTest();
         elasticSearchDeleteMethodTest.setUp(args[0],args[1]);
         if(args.length==3){
-            elasticSearchDeleteMethodTest.deleteIds = Arrays.asList(args[2]);
+            elasticSearchDeleteMethodTest.deleteIds = Arrays.asList(args[2]+".0");
         }else{
             int fromId = Integer.parseInt(args[2]);
             int endId = Integer.parseInt(args[3]);
             for(int i = fromId;i<=endId;i++){
-                elasticSearchDeleteMethodTest.deleteIds.add(String.valueOf(i));
+                elasticSearchDeleteMethodTest.deleteIds.add(String.valueOf(i)+".0");
             }
         }
         elasticSearchDeleteMethodTest.deleteById();
