@@ -11,6 +11,7 @@ public class PubLiveModel implements Serializable {
 
     private Long discussion_id;
     private Integer video_type;
+    private Integer item_type;
     private String appointment_start_ts;
     private Integer pv_total;
 
@@ -48,5 +49,13 @@ public class PubLiveModel implements Serializable {
 
     public void setPv_total(Integer pv_total) {
         this.pv_total = pv_total;
+    }
+
+    public Integer getItem_type() {
+        return item_type;
+    }
+
+    public void setItem_type(Integer item_type) {
+        this.item_type = item_type;
     }
 }

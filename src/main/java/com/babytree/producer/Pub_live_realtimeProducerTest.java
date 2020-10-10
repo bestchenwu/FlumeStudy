@@ -34,6 +34,7 @@ public class Pub_live_realtimeProducerTest {
         while(true){
             PubLiveModel liveModel = new PubLiveModel();
             liveModel.setDiscussion_id((long)i);
+            liveModel.setItem_type(1);
             liveModel.setAppointment_start_ts("2020-09-29 15:47:32");
             liveModel.setPv_total(i+100);
             liveModel.setVideo_type(i+2);
