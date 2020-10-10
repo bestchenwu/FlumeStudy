@@ -50,6 +50,7 @@ public class Pub_live_realtimeProducerTest {
             }
             //发送一条id为空的数据
             liveModel.setDiscussion_id(null);
+            liveModel.setItem_type(null);
             producer.send(new ProducerRecord(topicName,gson.toJson(liveModel)));
         }
     }
