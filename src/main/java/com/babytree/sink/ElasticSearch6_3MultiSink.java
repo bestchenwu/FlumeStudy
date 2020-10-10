@@ -1,6 +1,7 @@
 package com.babytree.sink;
 
 import com.alibaba.fastjson.JSON;
+import com.babytree.util.ElasticSearchUtil;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -115,12 +116,11 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
                     if(map == null){
                         break;
                     }
-                    Object id = map.get(idField);
-                    if(id==null){
+                    String es_id = ElasticSearchUtil.createEsId(map,idField);
+                    if(StringUtils.isBlank(es_id)){
                         System.err.println("id is missing:"+map);
                        continue;
                     }else{
-                        String es_id = String.valueOf(id);
                         map.put("cmd", "add");
                         map.put("id", es_id);
                         dataList.add(map);

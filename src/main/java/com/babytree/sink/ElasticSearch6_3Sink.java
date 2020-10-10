@@ -1,7 +1,9 @@
 package com.babytree.sink;
 
 import com.alibaba.fastjson.JSON;
+import com.babytree.util.ElasticSearchUtil;
 import com.google.gson.Gson;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.*;
 import org.apache.flume.conf.Configurable;
@@ -87,7 +89,8 @@ public class ElasticSearch6_3Sink extends AbstractSink implements Configurable {
                 } catch (Exception e) {
                     System.err.println("body is not a valid Json string,body=" + body);
                 }
-                if (map != null) {
+                String es_id = ElasticSearchUtil.createEsId(map, idField);
+                if (StringUtils.isNotBlank(es_id)) {
                     map.put("cmd", "add");
                     map.put("id", map.get(idField));
                     dataList.add(map);
