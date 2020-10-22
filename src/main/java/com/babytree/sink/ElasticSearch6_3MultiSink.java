@@ -153,6 +153,9 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         }
         BulkRequest request = new BulkRequest();
         for (Map<String, Object> map : datas) {
+            if(((String)map.get("id")).equals("11111_1")){
+                System.out.println("map:"+map);
+            }
             UpdateRequest updateRequest = new UpdateRequest().index(indexName)
                     .type("_doc").id((String)map.get("id")).doc(map).retryOnConflict(retry_times).upsert(map);
             request.add(updateRequest);
