@@ -162,6 +162,10 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         }
         request.timeout(TimeValue.timeValueSeconds(esWriteTimeout));
         BulkResponse bulkResponse = restHighLevelClient.bulk(request, new Header[0]);
+        if(bulkResponse.hasFailures()){
+            String failureMessage = bulkResponse.buildFailureMessage();
+            System.out.println("es write failure message:"+failureMessage);
+        }
         return bulkResponse.hasFailures();
     }
 
