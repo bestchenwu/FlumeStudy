@@ -71,6 +71,7 @@ public class Pub_live_realtimeSingleRowProducerTest {
         Map<String, Object> map = (Map<String, Object>) JSON.parseObject(body, Map.class);
         map.put("live_status",live_status);
         producer.send(new ProducerRecord(topicName,JSON.toJSONString(map)));
+        //long ts = 1603277440000l;
         producer.close();
     }
 }
