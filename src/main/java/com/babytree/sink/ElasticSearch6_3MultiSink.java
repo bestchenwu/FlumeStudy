@@ -185,5 +185,7 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         idField = context.getString("elasticSearchIds");
         //写超时时间
         esWriteTimeout = Optional.ofNullable(context.getLong("write_time_out")).orElse(30l);
+        //是否开启debug模式
+        debugEnabled = Optional.ofNullable(context.getInteger("write_time_out")).orElse(1);
     }
 }
