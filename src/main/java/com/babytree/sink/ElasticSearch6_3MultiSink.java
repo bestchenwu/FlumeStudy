@@ -1,6 +1,7 @@
 package com.babytree.sink;
 
 import com.alibaba.fastjson.JSON;
+import com.babytree.util.CommonDateUtil;
 import com.babytree.util.ElasticSearchUtil;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
@@ -43,6 +44,8 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
     private int retry_times;
     private Gson gson;
     private long esWriteTimeout = 30l;
+    //1表示打开debug开关,0表示否
+    private int debugEnabled = 1;
 
     @Override
     public synchronized void start() {
@@ -162,6 +165,11 @@ public class ElasticSearch6_3MultiSink extends AbstractSink implements Configura
         if(bulkResponse.hasFailures()){
             String failureMessage = bulkResponse.buildFailureMessage();
             System.out.println("es write failure message:"+failureMessage);
+        }else{
+            if(debugEnabled==1){
+                String currentTime = CommonDateUtil.getCurrentTime("yyyy-MM-dd HH:mm:ss");
+                System.out.println("time:"+currentTime+",datas:"+datas);
+            }
         }
         return bulkResponse.hasFailures();
     }
